@@ -621,7 +621,6 @@ namespace Microsoft.AspNetCore.SignalR.Client
             var readers = PackageStreamingParams(args);
 
             Log.PreparingNonBlockingInvocation(_logger, methodName, args.Length);
-
             var invocationMessage = new InvocationMessage(null, methodName, args);
             await SendWithLock(invocationMessage, callerName: nameof(SendCoreAsync));
 
@@ -1023,6 +1022,11 @@ namespace Microsoft.AspNetCore.SignalR.Client
 
         private async Task PingServer()
         {
+            if (Debugger.IsAttached)
+            {
+                return;
+            }
+
             if (_disposed || !_connectionLock.Wait(0))
             {
                 Log.UnableToAcquireConnectionLockForPing(_logger);

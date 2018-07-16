@@ -3,7 +3,7 @@
 
 import { HandshakeProtocol, HandshakeRequestMessage, HandshakeResponseMessage } from "./HandshakeProtocol";
 import { IConnection } from "./IConnection";
-import { CancelInvocationMessage, CompletionMessage, IHubProtocol, InvocationMessage, MessageType, StreamInvocationMessage, StreamItemMessage } from "./IHubProtocol";
+import { CancelInvocationMessage, CompletionMessage, IHubProtocol, InvocationMessage, MessageType, ParameterStreamMessage, StreamInvocationMessage, StreamItemMessage } from "./IHubProtocol";
 import { ILogger, LogLevel } from "./ILogger";
 import { IStreamResult } from "./Stream";
 import { Arg, Subject } from "./Utils";
@@ -555,11 +555,11 @@ export class HubConnection {
         };
     }
 
-    public createStreamItem(id: string, item: any): StreamItemMessage {
+    public createStreamItem(id: string, item: any): ParameterStreamMessage {
         return {
-            invocationId: id,
             item,
-            type: MessageType.StreamItem,
+            streamId: id,
+            type: MessageType.ParameterStream,
         };
     }
 }
@@ -571,10 +571,11 @@ class UploadStream {
         this.connection = connection;
         this.streamId = connection.nextStreamId();
     }
+
     public write(item: any): Promise<void> {
         return this.connection.sendWithProtocol(this.connection.createStreamItem(this.streamId, item));
-        // return this.connection.sendWithProtocol({type: MessageType.StreamItem, invocationId: this.streamId, item});
     }
+
     public async complete(error?: string): Promise<void> {
         if (error) {
             return this.connection.sendWithProtocol({ type: MessageType.StreamComplete, streamId: this.streamId, error });
@@ -582,6 +583,7 @@ class UploadStream {
             return this.connection.sendWithProtocol({ type: MessageType.StreamComplete, streamId: this.streamId });
         }
     }
+
     public asPlaceholder() {
         return {streamId: this.streamId};
     }
